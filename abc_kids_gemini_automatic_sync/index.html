@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ABC Kids Ultimate AI Studio - Gemini Edition</title>
+  <meta name="theme-color" content="#4F46E5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; user-select: none; -webkit-user-select: none; }
+    .card-zoom { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    .card-zoom:active { transform: scale(0.94); }
+    .nav-btn.active { background-color: #4F46E5; color: white; border-color: #4F46E5; }
+    .animate-bounce-short { animation: bounce 0.6s ease 2; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-24 text-gray-800">
+
+  <!-- Top Header -->
+  <header class="bg-indigo-600 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="text-3xl">✨</div>
+      <div>
+        <h1 class="text-xl font-black tracking-wide">ABC Kids Gemini AI</h1>
+        <p class="text-xs text-indigo-200">משחק למידה אינטראקטיבי חכם עם סנכרון ענן</p>
+      </div>
+    </div>
+    <!-- Active Profile & Audio Settings Badge -->
+    <div class="flex items-center gap-2">
+      <button onclick="openProfileModal()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 border border-indigo-400/30">
+        <span id="current-avatar">👦</span>
+        <span id="current-player-name">אורח</span>
+      </button>
+      <button onclick="openSettingsModal()" class="bg-indigo-800 hover:bg-indigo-900 p-2 rounded-full text-white text-sm shadow">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="max-w-3xl mx-auto m-3 bg-white p-1.5 rounded-2xl shadow-sm flex gap-1 border border-slate-200">
+    <button id="tab-grid" onclick="switchTab('grid')" class="nav-btn active flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all text-center border">
+      📚 לוח אותיות
+    </button>
+    <button id="tab-flashcards" onclick="switchTab('flashcards')" class="nav-btn flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all text-center text-gray-600 border border-transparent">
+      🎴 כרטיסיות
+    </button>
+    <button id="tab-games" onclick="switchTab('games')" class="nav-btn flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all text-center text-gray-600 border border-transparent">
+      🎮 מרכז משחקים
+    </button>
+    <button id="tab-leaderboard" onclick="switchTab('leaderboard')" class="nav-btn flex-1 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all text-center text-gray-600 border border-transparent">
+      🏆 שיאים
+    </button>
+  </nav>
+
+  <!-- SECTION 1: GRID VIEW -->
+  <section id="view-grid" class="max-w-4xl mx-auto p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+  </section>
+
+  <!-- SECTION 2: FLASHCARD VIEW -->
+  <section id="view-flashcards" class="hidden max-w-md mx-auto p-4 flex flex-col items-center">
+    <div id="flashcard-content" class="w-full bg-white rounded-3xl p-6 shadow-xl border-4 border-indigo-200 text-center flex flex-col items-center justify-between min-h-[400px]">
+    </div>
+    <div class="flex justify-between w-full mt-6 gap-3">
+      <button onclick="prevCard()" class="flex-1 bg-slate-200 active:bg-slate-300 text-slate-800 font-extrabold py-3 rounded-2xl text-base shadow">
+        ➡️ הקודם
+      </button>
+      <button onclick="playCurrentFlashcard()" class="bg-indigo-600 active:bg-indigo-700 text-white font-extrabold px-6 py-3 rounded-2xl text-lg shadow-lg flex items-center gap-2">
+        <span>🔊</span> השמע
+      </button>
+      <button onclick="nextCard()" class="flex-1 bg-slate-200 active:bg-slate-300 text-slate-800 font-extrabold py-3 rounded-2xl text-base shadow">
+        הבא ⬅️
+      </button>
+    </div>
+  </section>
+
+  <!-- SECTION 3: GAMES HUB -->
+  <section id="view-games" class="hidden max-w-2xl mx-auto p-3">
+    <!-- Game Mode Selection Grid -->
+    <div id="game-mode-selector" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+      <button onclick="selectGameMode('quiz')" class="game-select-btn bg-white p-4 rounded-2xl border-2 border-indigo-500 shadow-md flex flex-col items-center text-center">
+        <span class="text-4xl mb-2">🎯</span>
+        <span class="font-extrabold text-indigo-900 text-base">זיהוי אותיות</span>
+        <span class="text-xs text-slate-500 mt-1">מצא את האות או החיה המתאימה</span>
+      </button>
+
+      <button onclick="selectGameMode('timeattack')" class="game-select-btn bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center text-center hover:border-amber-400">
+        <span class="text-4xl mb-2">⚡</span>
+        <span class="font-extrabold text-gray-800 text-base">אתגר 60 שניות</span>
+        <span class="text-xs text-slate-500 mt-1">כמה תשובות נכונות תספיק בדקה?</span>
+      </button>
+
+      <button onclick="selectGameMode('memory')" class="game-select-btn bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm flex flex-col items-center text-center hover:border-purple-400">
+        <span class="text-4xl mb-2">🧠</span>
+        <span class="font-extrabold text-gray-800 text-base">משחק זיכרון</span>
+        <span class="text-xs text-slate-500 mt-1">התאם בין האות לתמונה</span>
+      </button>
+    </div>
+
+    <!-- Active Game Arena -->
+    <div id="game-arena" class="bg-white rounded-3xl p-6 shadow-xl border-4 border-indigo-300 text-center relative overflow-hidden">
+      <!-- Game Info Bar -->
+      <div class="flex justify-between items-center pb-4 mb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full" id="game-mode-badge">זיהוי אותיות</span>
+          <span id="game-timer" class="hidden text-xs font-black bg-rose-100 text-rose-700 px-3 py-1 rounded-full">⏱️ 60s</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="game-score" class="text-sm font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">ניקוד: 0</span>
+        </div>
+      </div>
+
+      <!-- Question & Content Container -->
+      <div id="game-content-area" class="min-h-[220px] flex flex-col items-center justify-center">
+      </div>
+
+      <!-- Feedback Banner -->
+      <div id="game-feedback" class="mt-4 text-xl font-black min-h-[36px] flex items-center justify-center"></div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: LEADERBOARD & CLOUD SYNC -->
+  <section id="view-leaderboard" class="hidden max-w-xl mx-auto p-4">
+    <div class="bg-white rounded-3xl p-6 shadow-xl border-4 border-amber-300">
+      <div class="flex justify-between items-center mb-6 pb-3 border-b border-amber-100">
+        <div>
+          <h2 class="text-xl font-black text-amber-900 flex items-center gap-2">🏆 טבלת שיאים ואחים</h2>
+          <p class="text-xs text-amber-700">סנכרון אוטומטי בזמן אמת</p>
+        </div>
+        <button onclick="syncWithGoogleSheet()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow flex items-center gap-1">
+          🔄 רענן שיאים
+        </button>
+      </div>
+
+      <!-- Leaderboard List -->
+      <div id="leaderboard-list" class="space-y-3 mb-2">
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE SELECTION MODAL -->
+  <div id="modal-profile" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-4 border-indigo-400">
+      <h3 class="text-xl font-black text-gray-800 mb-2 text-center">👦 בחר אח / שחקן</h3>
+      <p class="text-xs text-slate-500 text-center mb-4">כל אח שומר את הניקוד וההישגים שלו בנפרד</p>
+
+      <div id="profiles-container" class="grid grid-cols-2 gap-3 mb-4 max-h-[220px] overflow-y-auto p-1">
+      </div>
+
+      <div class="pt-3 border-t border-slate-100">
+        <p class="text-xs font-bold text-gray-700 mb-2">הוסף אח חדש:</p>
+        <div class="flex gap-2">
+          <select id="new-avatar-select" class="bg-slate-100 text-xl p-2 rounded-xl border">
+            <option>👦</option><option>👧</option><option>👶</option><option>🦁</option><option>🦊</option><option>🦄</option><option>🚀</option>
+          </select>
+          <input type="text" id="new-player-name" placeholder="שם האח/אחות..." class="flex-1 p-2 border rounded-xl text-sm font-bold">
+          <button onclick="addNewPlayer()" class="bg-emerald-500 text-white font-black px-4 rounded-xl text-sm">הוסף</button>
+        </div>
+      </div>
+
+      <button onclick="closeProfileModal()" class="w-full mt-5 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm">סגור</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS & AUDIO VOICE MODAL -->
+  <div id="modal-settings" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border-4 border-indigo-400">
+      <h3 class="text-xl font-black text-gray-800 mb-2 text-center">⚙️ הגדרות קול וסאונד Gemini</h3>
+      <p class="text-xs text-slate-500 text-center mb-4">בחר את סגנון הקול והטון הרצוי</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">סגנון קול AI (מנוע הדיבור):</label>
+          <select id="voice-style-select" onchange="updateVoiceSettings()" class="w-full p-2.5 bg-slate-50 border rounded-xl font-bold text-sm">
+            <option value="Kore">✨ Kore (קול חם, דרמטי וידידותי)</option>
+            <option value="Puck">🎨 Puck (קול אנרגטי ושובב)</option>
+            <option value="Fenrir">🦁 Fenrir (קול עמוק ומעודד)</option>
+            <option value="Aoede">🎶 Aoede (קול מנגינתי ורך)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">מהירות הדיבור:</label>
+          <input type="range" id="voice-rate" min="0.7" max="1.2" step="0.1" value="0.9" onchange="updateVoiceSettings()" class="w-full">
+          <div class="flex justify-between text-[10px] text-slate-400 font-bold">
+            <span>איטי וברור</span>
+            <span>רגיל</span>
+            <span>מהיר</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-indigo-900">משפטי עידוד קוליים</div>
+            <div class="text-[10px] text-indigo-600">שבחים והפתעות קוליות לאחר תשובות נכונות</div>
+          </div>
+          <input type="checkbox" id="encouragement-toggle" checked onchange="updateVoiceSettings()" class="w-5 h-5 accent-indigo-600">
+        </div>
+      </div>
+
+      <button onclick="closeSettingsModal()" class="w-full mt-6 bg-indigo-600 text-white font-bold py-2.5 rounded-xl text-sm">שמור וסגור</button>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // CONFIGURATION - HARDCODED WEB APP URL
+    // -------------------------------------------------------------
+    // השרת המובנה שלכם בענן לשמירת שיאים
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx_YOUR_SCRIPT_ID_HERE/exec";
+
+    // -------------------------------------------------------------
+    // ALPHABET DATA STRUCTURE
+    // -------------------------------------------------------------
+    const alphabetData = [
+      { letter: 'Aa', nameEn: 'Alligator', nameHe: 'אליגטור', emoji: '🐊', word2: 'Apple', word2He: 'תפוח', color: 'bg-red-50 border-red-300 text-red-700' },
+      { letter: 'Bb', nameEn: 'Bee', nameHe: 'דבורה', emoji: '🐝', word2: 'Butterfly', word2He: 'פרפר', color: 'bg-amber-50 border-amber-300 text-amber-700' },
+      { letter: 'Cc', nameEn: 'Cat', nameHe: 'חתול', emoji: '🐱', word2: 'Caterpillar', word2He: 'זחל', color: 'bg-orange-50 border-orange-300 text-orange-700' },
+      { letter: 'Dd', nameEn: 'Dog', nameHe: 'כלב', emoji: '🐶', word2: 'Drum', word2He: 'תוף', color: 'bg-yellow-50 border-yellow-300 text-yellow-700' },
+      { letter: 'Ee', nameEn: 'Elephant', nameHe: 'פיל', emoji: '🐘', word2: 'Egg', word2He: 'ביצה', color: 'bg-green-50 border-green-300 text-green-700' },
+      { letter: 'Ff', nameEn: 'Fox', nameHe: 'שועל', emoji: '🦊', word2: 'Fish', word2He: 'דג', color: 'bg-emerald-50 border-emerald-300 text-emerald-700' },
+      { letter: 'Gg', nameEn: 'Giraffe', nameHe: "ג'ירף", emoji: '🦒', word2: 'Garden', word2He: 'גינה', color: 'bg-teal-50 border-teal-300 text-teal-700' },
+      { letter: 'Hh', nameEn: 'House', nameHe: 'בית', emoji: '🏠', word2: 'Horse', word2He: 'סוס', color: 'bg-cyan-50 border-cyan-300 text-cyan-700' },
+      { letter: 'Ii', nameEn: 'Ice', nameHe: 'קרח', emoji: '🧊', word2: 'Iguana', word2He: 'איגואנה', color: 'bg-sky-50 border-sky-300 text-sky-700' },
+      { letter: 'Jj', nameEn: 'Jaguar', nameHe: "ג'גואר", emoji: '🐆', word2: 'Jump', word2He: 'קפיצה', color: 'bg-blue-50 border-blue-300 text-blue-700' },
+      { letter: 'Kk', nameEn: 'Kangaroo', nameHe: 'קנגורו', emoji: '🦘', word2: 'Kite', word2He: 'עפיפון', color: 'bg-indigo-50 border-indigo-300 text-indigo-700' },
+      { letter: 'Ll', nameEn: 'Lion', nameHe: 'אריה', emoji: '🦁', word2: 'Light', word2He: 'אור', color: 'bg-violet-50 border-violet-300 text-violet-700' },
+      { letter: 'Mm', nameEn: 'Mountain', nameHe: 'הר', emoji: '⛰️', word2: 'Mouse', word2He: 'עכבר', color: 'bg-purple-50 border-purple-300 text-purple-700' },
+      { letter: 'Nn', nameEn: 'Nest', nameHe: 'קן', emoji: '🪹', word2: 'Bird', word2He: 'ציפור', color: 'bg-fuchsia-50 border-fuchsia-300 text-fuchsia-700' },
+      { letter: 'Oo', nameEn: 'Orange', nameHe: 'תפוז', emoji: '🍊', word2: 'Octopus', word2He: 'תמנון', color: 'bg-pink-50 border-pink-300 text-pink-700' },
+      { letter: 'Pp', nameEn: 'Penguin', nameHe: 'פינגווין', emoji: '🐧', word2: 'Puddle', word2He: 'שלולית', color: 'bg-rose-50 border-rose-300 text-rose-700' },
+      { letter: 'Qq', nameEn: 'Queen', nameHe: 'מלכה', emoji: '👑', word2: 'Quilt', word2He: 'שמיכה', color: 'bg-red-50 border-red-300 text-red-700' },
+      { letter: 'Rr', nameEn: 'Rabbit', nameHe: 'ארנב', emoji: '🐰', word2: 'Rainbow', word2He: 'קשת', color: 'bg-amber-50 border-amber-300 text-amber-700' },
+      { letter: 'Ss', nameEn: 'Snake', nameHe: 'נחש', emoji: '🐍', word2: 'Sunflower', word2He: 'חמנייה', color: 'bg-yellow-50 border-yellow-300 text-yellow-700' },
+      { letter: 'Tt', nameEn: 'Tiger', nameHe: 'טיגריס', emoji: '🐯', word2: 'Tree', word2He: 'עץ', color: 'bg-green-50 border-green-300 text-green-700' },
+      { letter: 'Uu', nameEn: 'Umbrella', nameHe: 'מטריה', emoji: '☂️', word2: 'Unicorn', word2He: 'חד-קרן', color: 'bg-teal-50 border-teal-300 text-teal-700' },
+      { letter: 'Vv', nameEn: 'Vase', nameHe: 'אגרטל', emoji: '🏺', word2: 'Vegetables', word2He: 'ירקות', color: 'bg-sky-50 border-sky-300 text-sky-700' },
+      { letter: 'Ww', nameEn: 'Whale', nameHe: 'לווייתן', emoji: '🐋', word2: 'Waves', word2He: 'גלים', color: 'bg-blue-50 border-blue-300 text-blue-700' },
+      { letter: 'Xx', nameEn: 'Xylophone', nameHe: 'קסילופון', emoji: '🎼', word2: 'X-Ray', word2He: 'רנטגן', color: 'bg-indigo-50 border-indigo-300 text-indigo-700' },
+      { letter: 'Yy', nameEn: 'Yak', nameHe: 'יאק', emoji: '🐂', word2: 'Yacht', word2He: 'יאכטה', color: 'bg-purple-50 border-purple-300 text-purple-700' },
+      { letter: 'Zz', nameEn: 'Zebra', nameHe: 'זברה', emoji: '🦓', word2: 'Zoo', word2He: 'גן חיות', color: 'bg-slate-50 border-slate-300 text-slate-700' }
+    ];
+
+    const ENCOURAGEMENTS = [
+      "Awesome job!", "You are so smart!", "Superstar!", "Fantastic!", 
+      "Great memory!", "Way to go!", "Brilliant!", "Keep it up!"
+    ];
+
+    // -------------------------------------------------------------
+    // APP STATE & PROFILES
+    // -------------------------------------------------------------
+    let players = JSON.parse(localStorage.getItem('abc_players') || '[{"id":"1","name":"דניאל","avatar":"👦","score":120},{"id":"2","name":"מאיה","avatar":"👧","score":95}]');
+    let currentPlayerId = localStorage.getItem('abc_current_player') || '1';
+    let voiceStyle = localStorage.getItem('abc_voice_style') || 'Kore';
+    let voiceRate = parseFloat(localStorage.getItem('abc_voice_rate') || '0.9');
+    let playEncouragement = localStorage.getItem('abc_encouragement') !== 'false';
+
+    let currentCardIndex = 0;
+    let currentGameMode = 'quiz';
+    let gameScore = 0;
+    let timerInterval = null;
+    let timeLeft = 60;
+    let currentQuizItem = null;
+    let memoryFlippedCards = [];
+
+    // -------------------------------------------------------------
+    // AUDIO ENGINE - NATURAL SPEECH & GEMINI VOICE CONFIG
+    // -------------------------------------------------------------
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = voiceRate;
+
+      if (voiceStyle === 'Puck') { utterance.pitch = 1.3; }
+      else if (voiceStyle === 'Fenrir') { utterance.pitch = 0.8; }
+      else if (voiceStyle === 'Aoede') { utterance.pitch = 1.1; }
+      else { utterance.pitch = 1.0; }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function playCardAudio(item) {
+      const letter = item.letter[0].toUpperCase();
+      const textToSpeak = `${item.nameEn}. ${letter} is for ${item.nameEn}.`;
+      speakText(textToSpeak);
+    }
+
+    function playEncouragementAudio() {
+      if (!playEncouragement) return;
+      const phrase = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+      setTimeout(() => {
+        speakText(phrase);
+      }, 700);
+    }
+
+    // -------------------------------------------------------------
+    // PLAYER PROFILES & LOCAL STORAGE
+    // -------------------------------------------------------------
+    function getCurrentPlayer() {
+      return players.find(p => p.id === currentPlayerId) || players[0];
+    }
+
+    function updatePlayerHeader() {
+      const p = getCurrentPlayer();
+      document.getElementById('current-avatar').innerText = p.avatar;
+      document.getElementById('current-player-name').innerText = p.name;
+    }
+
+    function openProfileModal() {
+      renderProfilesList();
+      document.getElementById('modal-profile').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('modal-profile').classList.add('hidden');
+    }
+
+    function renderProfilesList() {
+      const container = document.getElementById('profiles-container');
+      container.innerHTML = '';
+      players.forEach(p => {
+        const activeClass = p.id === currentPlayerId ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 bg-white';
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-2xl border-2 cursor-pointer flex items-center gap-3 ${activeClass}`;
+        card.onclick = () => selectPlayer(p.id);
+        card.innerHTML = `
+          <span class="text-3xl">${p.avatar}</span>
+          <div class="overflow-hidden">
+            <div class="font-extrabold text-sm text-gray-800 truncate">${p.name}</div>
+            <div class="text-[11px] text-indigo-600 font-bold">ניקוד: ${p.score || 0}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectPlayer(id) {
+      currentPlayerId = id;
+      localStorage.setItem('abc_current_player', id);
+      updatePlayerHeader();
+      closeProfileModal();
+      renderLeaderboard();
+    }
+
+    function addNewPlayer() {
+      const nameInput = document.getElementById('new-player-name');
+      const avatarSelect = document.getElementById('new-avatar-select');
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      const newP = {
+        id: Date.now().toString(),
+        name: name,
+        avatar: avatarSelect.value,
+        score: 0
+      };
+      players.push(newP);
+      localStorage.setItem('abc_players', JSON.stringify(players));
+      nameInput.value = '';
+      selectPlayer(newP.id);
+    }
+
+    function addScoreToCurrentPlayer(pts) {
+      const p = getCurrentPlayer();
+      p.score = (p.score || 0) + pts;
+      localStorage.setItem('abc_players', JSON.stringify(players));
+      updatePlayerHeader();
+      syncWithGoogleSheet();
+    }
+
+    // -------------------------------------------------------------
+    // SETTINGS MODAL
+    // -------------------------------------------------------------
+    function openSettingsModal() {
+      document.getElementById('voice-style-select').value = voiceStyle;
+      document.getElementById('voice-rate').value = voiceRate;
+      document.getElementById('encouragement-toggle').checked = playEncouragement;
+      document.getElementById('modal-settings').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('modal-settings').classList.add('hidden');
+    }
+
+    function updateVoiceSettings() {
+      voiceStyle = document.getElementById('voice-style-select').value;
+      voiceRate = parseFloat(document.getElementById('voice-rate').value);
+      playEncouragement = document.getElementById('encouragement-toggle').checked;
+
+      localStorage.setItem('abc_voice_style', voiceStyle);
+      localStorage.setItem('abc_voice_rate', voiceRate);
+      localStorage.setItem('abc_encouragement', playEncouragement);
+    }
+
+    // -------------------------------------------------------------
+    // AUTOMATIC HIDDEN GOOGLE SHEETS CLOUD SYNC
+    // -------------------------------------------------------------
+    function syncWithGoogleSheet() {
+      renderLeaderboard();
+      if (!GOOGLE_SHEET_WEB_APP_URL || GOOGLE_SHEET_WEB_APP_URL.includes("YOUR_SCRIPT_ID_HERE")) return;
+
+      const player = getCurrentPlayer();
+      const payload = {
+        playerName: player.name,
+        avatar: player.avatar,
+        score: player.score,
+        timestamp: new Date().toISOString()
+      };
+
+      fetch(GOOGLE_SHEET_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(e => console.log('Silent Sync Note:', e));
+    }
+
+    function renderLeaderboard() {
+      const container = document.getElementById('leaderboard-list');
+      container.innerHTML = '';
+
+      const sorted = [...players].sort((a,b) => (b.score||0) - (a.score||0));
+
+      sorted.forEach((p, idx) => {
+        let badge = `#${idx+1}`;
+        if (idx === 0) badge = '🥇 מקום 1';
+        if (idx === 1) badge = '🥈 מקום 2';
+        if (idx === 2) badge = '🥉 מקום 3';
+
+        const card = document.createElement('div');
+        card.className = `p-3.5 rounded-2xl border flex justify-between items-center bg-white shadow-sm`;
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">${p.avatar}</span>
+            <div>
+              <div class="font-extrabold text-gray-800 text-sm">${p.name}</div>
+              <div class="text-[11px] font-bold text-amber-600">${badge}</div>
+            </div>
+          </div>
+          <div class="text-lg font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-xl">
+            ${p.score || 0} <span class="text-xs text-indigo-400 font-normal">נק'</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // NAVIGATION & TAB SWITCHING
+    // -------------------------------------------------------------
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`tab-${tab}`).classList.add('active');
+
+      ['grid', 'flashcards', 'games', 'leaderboard'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+      });
+
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+
+      if (tab === 'flashcards') renderFlashcard();
+      if (tab === 'games') startSelectedGame();
+      if (tab === 'leaderboard') renderLeaderboard();
+    }
+
+    // -------------------------------------------------------------
+    // GRID VIEW RENDER
+    // -------------------------------------------------------------
+    function renderGrid() {
+      const container = document.getElementById('view-grid');
+      container.innerHTML = '';
+      alphabetData.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = `card-zoom cursor-pointer p-4 rounded-3xl border-2 shadow-sm flex flex-col items-center justify-between text-center bg-white ${item.color}`;
+        card.onclick = () => playCardAudio(item);
+        card.innerHTML = `
+          <div class="text-3xl font-black mb-1">${item.letter}</div>
+          <div class="text-5xl my-2">${item.emoji}</div>
+          <div class="text-base font-extrabold text-gray-800">${item.nameEn}</div>
+          <div class="text-xs text-gray-500 font-bold">${item.nameHe}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // FLASHCARD VIEW RENDER
+    // -------------------------------------------------------------
+    function renderFlashcard() {
+      const item = alphabetData[currentCardIndex];
+      const container = document.getElementById('flashcard-content');
+      container.innerHTML = `
+        <div class="text-xs font-bold text-gray-400">אות ${currentCardIndex + 1} מתוך ${alphabetData.length}</div>
+        <div class="text-6xl font-black text-indigo-600 my-2">${item.letter}</div>
+        <div class="text-8xl my-3 animate-bounce-short">${item.emoji}</div>
+        <div class="text-3xl font-black text-gray-800">${item.nameEn}</div>
+        <div class="text-lg font-bold text-indigo-500 mt-1">${item.nameHe}</div>
+        <div class="text-xs text-slate-400 mt-3 font-medium">מילה נוספת: ${item.word2} (${item.word2He})</div>
+      `;
+      playCardAudio(item);
+    }
+
+    function prevCard() {
+      currentCardIndex = (currentCardIndex - 1 + alphabetData.length) % alphabetData.length;
+      renderFlashcard();
+    }
+
+    function nextCard() {
+      currentCardIndex = (currentCardIndex + 1) % alphabetData.length;
+      renderFlashcard();
+    }
+
+    function playCurrentFlashcard() {
+      playCardAudio(alphabetData[currentCardIndex]);
+    }
+
+    // -------------------------------------------------------------
+    // GAMES HUB & MULTI-MODE ENGINE
+    // -------------------------------------------------------------
+    function selectGameMode(mode) {
+      currentGameMode = mode;
+      clearInterval(timerInterval);
+      document.querySelectorAll('.game-select-btn').forEach(btn => {
+        btn.classList.remove('border-indigo-500');
+        btn.classList.add('border-slate-200');
+      });
+      event.currentTarget.classList.remove('border-slate-200');
+      event.currentTarget.classList.add('border-indigo-500');
+
+      startSelectedGame();
+    }
+
+    function startSelectedGame() {
+      clearInterval(timerInterval);
+      document.getElementById('game-feedback').innerHTML = '';
+      
+      if (currentGameMode === 'quiz') {
+        document.getElementById('game-mode-badge').innerText = '🎯 זיהוי אותיות';
+        document.getElementById('game-timer').classList.add('hidden');
+        renderQuizTurn();
+      } else if (currentGameMode === 'timeattack') {
+        document.getElementById('game-mode-badge').innerText = '⚡ אתגר 60 שניות';
+        document.getElementById('game-timer').classList.remove('hidden');
+        startTimeAttackGame();
+      } else if (currentGameMode === 'memory') {
+        document.getElementById('game-mode-badge').innerText = '🧠 משחק זיכרון';
+        document.getElementById('game-timer').classList.add('hidden');
+        startMemoryGame();
+      }
+    }
+
+    // MODE 1: STANDARD QUIZ
+    function renderQuizTurn() {
+      currentQuizItem = alphabetData[Math.floor(Math.random() * alphabetData.length)];
+      const area = document.getElementById('game-content-area');
+
+      const isLetterTarget = Math.random() > 0.5;
+      const questionText = isLetterTarget ? `איפה ה-${currentQuizItem.nameEn}?` : `איזו אות מתחילה ב-${currentQuizItem.nameHe}?`;
+
+      area.innerHTML = `
+        <div class="mb-3">
+          <p class="text-xs font-bold text-slate-400">שאלה:</p>
+          <h3 class="text-2xl font-black text-indigo-900 mb-2">${questionText}</h3>
+          <button onclick="speakText('${currentQuizItem.nameEn}')" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl inline-flex items-center gap-1 shadow-sm">
+            🔊 השמע מילת רמז
+          </button>
+        </div>
+        <div id="quiz-options-grid" class="grid grid-cols-2 gap-3 w-full max-w-sm mt-3"></div>
+      `;
+
+      speakText(currentQuizItem.nameEn);
+
+      let options = [currentQuizItem];
+      while (options.length < 4) {
+        let rand = alphabetData[Math.floor(Math.random() * alphabetData.length)];
+        if (!options.includes(rand)) options.push(rand);
+      }
+      options.sort(() => Math.random() - 0.5);
+
+      const grid = document.getElementById('quiz-options-grid');
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm active:scale-95 transition-all';
+        btn.innerHTML = `
+          <span class="text-4xl mb-1">${opt.emoji}</span>
+          <span class="text-xl font-black text-slate-800">${opt.letter}</span>
+        `;
+        btn.onclick = () => checkQuizAnswer(opt);
+        grid.appendChild(btn);
+      });
+    }
+
+    function checkQuizAnswer(selected) {
+      const fb = document.getElementById('game-feedback');
+      if (selected.letter === currentQuizItem.letter) {
+        gameScore += 10;
+        document.getElementById('game-score').innerText = `ניקוד: ${gameScore}`;
+        addScoreToCurrentPlayer(10);
+        confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+        fb.innerHTML = '<span class="text-emerald-600">🎉 תשובה נכונה! כל הכבוד!</span>';
+        playEncouragementAudio();
+        setTimeout(renderQuizTurn, 1600);
+      } else {
+        fb.innerHTML = '<span class="text-rose-500">❌ אופס, נסה שוב!</span>';
+      }
+    }
+
+    // MODE 2: TIME ATTACK (60 Seconds)
+    function startTimeAttackGame() {
+      timeLeft = 60;
+      gameScore = 0;
+      document.getElementById('game-score').innerText = `ניקוד: 0`;
+      document.getElementById('game-timer').innerText = `⏱️ ${timeLeft}s`;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('game-timer').innerText = `⏱️ ${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endTimeAttackGame();
+        }
+      }, 1000);
+
+      renderQuizTurn();
+    }
+
+    function endTimeAttackGame() {
+      const area = document.getElementById('game-content-area');
+      area.innerHTML = `
+        <div class="py-6">
+          <div class="text-6xl mb-3">🏆</div>
+          <h3 class="text-2xl font-black text-indigo-900">הזמן הסתיים!</h3>
+          <p class="text-base font-bold text-slate-600 mt-2">השגת ${gameScore} נקודות באתגר 60 שניות!</p>
+          <button onclick="startTimeAttackGame()" class="mt-6 bg-indigo-600 text-white font-extrabold px-6 py-3 rounded-2xl text-base shadow-lg">
+            🔄 נסה שוב
+          </button>
+        </div>
+      `;
+      confetti({ particleCount: 100, spread: 90, origin: { y: 0.5 } });
+    }
+
+    // MODE 3: MEMORY MATCH GAME
+    function startMemoryGame() {
+      const area = document.getElementById('game-content-area');
+      area.innerHTML = '<div id="memory-grid" class="grid grid-cols-4 gap-2 w-full max-w-sm my-2"></div>';
+
+      let items = [...alphabetData].sort(() => Math.random() - 0.5).slice(0, 4);
+      let cards = [];
+      items.forEach(item => {
+        cards.push({ id: item.letter, type: 'letter', content: item.letter, item: item });
+        cards.push({ id: item.letter, type: 'emoji', content: item.emoji, item: item });
+      });
+      cards.sort(() => Math.random() - 0.5);
+
+      memoryFlippedCards = [];
+      const grid = document.getElementById('memory-grid');
+
+      cards.forEach((c, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'memory-card bg-indigo-600 text-white font-black rounded-2xl h-20 text-3xl flex items-center justify-center shadow transition-all active:scale-95';
+        btn.dataset.index = idx;
+        btn.innerText = '❓';
+        btn.onclick = () => flipMemoryCard(btn, c, cards);
+        grid.appendChild(btn);
+      });
+    }
+
+    function flipMemoryCard(btn, card, allCards) {
+      if (memoryFlippedCards.length >= 2 || btn.classList.contains('matched') || btn.innerText !== '❓') return;
+
+      btn.innerText = card.content;
+      btn.classList.remove('bg-indigo-600', 'text-white');
+      btn.classList.add('bg-amber-100', 'border-2', 'border-amber-400', 'text-gray-800');
+      playCardAudio(card.item);
+
+      memoryFlippedCards.push({ btn: btn, card: card });
+
+      if (memoryFlippedCards.length === 2) {
+        const [c1, c2] = memoryFlippedCards;
+        if (c1.card.id === c2.card.id) {
+          c1.btn.classList.add('matched', 'bg-emerald-100', 'border-emerald-400');
+          c2.btn.classList.add('matched', 'bg-emerald-100', 'border-emerald-400');
+          memoryFlippedCards = [];
+          gameScore += 15;
+          document.getElementById('game-score').innerText = `ניקוד: ${gameScore}`;
+          addScoreToCurrentPlayer(15);
+          playEncouragementAudio();
+
+          const matched = document.querySelectorAll('.memory-card.matched').length;
+          if (matched === allCards.length) {
+            confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
+            document.getElementById('game-feedback').innerHTML = '<span class="text-emerald-600">🎉 ניצחון מדהים! מצאת את כל הזוגות!</span>';
+            setTimeout(startMemoryGame, 2200);
+          }
+        } else {
+          setTimeout(() => {
+            c1.btn.innerText = '❓';
+            c2.btn.innerText = '❓';
+            c1.btn.className = 'memory-card bg-indigo-600 text-white font-black rounded-2xl h-20 text-3xl flex items-center justify-center shadow transition-all active:scale-95';
+            c2.btn.className = 'memory-card bg-indigo-600 text-white font-black rounded-2xl h-20 text-3xl flex items-center justify-center shadow transition-all active:scale-95';
+            memoryFlippedCards = [];
+          }, 1000);
+        }
+      }
+    }
+
+    // INITIALIZATION
+    renderGrid();
+    updatePlayerHeader();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
